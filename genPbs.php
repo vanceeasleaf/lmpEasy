@@ -25,14 +25,10 @@ contexts=`~/bin/get_psm_sharedcontexts_max.sh`
   export PSM_SHAREDCONTEXTS_MAX=$contexts
  fi
 cd  $path/minimize
-cp   $path/qloop.php $path/species.php $home/
-	pwd
-$php $home/minimize/input.php>input
-#$php $home/minimize/structure.php             
+$php $home/minimize/input.php \"$path/qloop.php\" \"$path/species.php\">input   
 $OMPI_HOME/bin/mpirun  -machinefile \$PBS_NODEFILE -np \$n_proc $APP_PATH <input &>$path/minimize/$LOGOUT
 cd  $path
-cp   $path/qloop.php $path/species.php $home/
-$php $home/input.php>input
+$php $home/input.php \"$path/qloop.php\" \"$path/species.php\">input
 $OMPI_HOME/bin/mpirun  --mca btl openib,self  -machinefile \$PBS_NODEFILE -np \$n_proc $APP_PATH <input &>$path/$LOGOUT
 
 

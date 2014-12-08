@@ -3,7 +3,20 @@ $initsub=1;
 require_once("sub.php");
 require_once("$srcHome/config.php");
 require_once("$srcHome/funcs.php");
-
+function pwrite($fp,$s){   
+	printf("$s");
+	fprintf($fp,"$s");
+}
+function tabjoin(){
+	  $argc = func_num_args();    #获取参数个数
+        $argv = func_get_args();    #获取参数值
+        $s="";
+        for($i=0;$i<$argc;$i++){
+        	$s.=$argv[$i];
+        	if($i<$argc-1)$s.="\t";
+        }
+	return $s;
+}
 if($argc==1){
 	clean();
 	require_once("$srcHome/toolSub.php");
@@ -15,22 +28,11 @@ else if($argv[1]=="q"){
         $obj=getObjs("$projHome/qloops.txt");
         $paras=getParas($obj);
          echo "id\tpercent\tstatus\tqueue\tprocs";
+         fprintf($result,"id");
          for($j=0;$j<count($paras);$j++){
-         	 printf("\t%s",$paras[$j]);
-         	 fprintf($result,"%s\t",$paras[$j]);
+         	 pwrite($result,"\t".$paras[$j]);
          }
-         printf("\tkappa");
-         fprintf($result,"kappa");
-                  printf("\ttotalE");
-         fprintf($result,"\ttotalE");
-                           printf("\tNatom");
-         fprintf($result,"\tNatom");
-                                    printf("\tE/N");
-         fprintf($result,"\tE/N");
-                                             printf("\tdisorder");
-         fprintf($result,"\tdisorder");
-                           printf("\n");
-         fprintf($result,"\n");
+         pwrite($result,"\tkappa\ttotalE\tNatom\tE/N\tdisorder\tnonequ\tnonequ3\tnonequ4\n");
         for($i=0;$i<count($obj);$i++){
         	$ob=$obj[$i];
         	        	$id=$ob["id"];
@@ -62,7 +64,7 @@ else if($argv[1]=="q"){
         	$percent=sprintf("%.1f%%",$step/$runTime*100);
         	}
 
-        	echo $id."\t".$percent."\t".$status."\t".$queue."\t".$nodes."x".$procs;
+        	echo tabjoin($id,$percent,$status,$queue,$nodes."x".$procs);
         	for($j=0;$j<count($paras);$j++){
         		$key=$paras[$j];
          	 printf("\t%s",$ob[$key]===""?"def":$ob[$key]);
@@ -79,29 +81,30 @@ else if($argv[1]=="q"){
          	          	  passthru("cd $projHome/$id;$sed;cat qloop.php1 $postfile>qloop.php2;cp qloop.php2 $srcHome/qloop.php;cp species.php $srcHome;$php $srcHome/profile.php;");
          	          $kappaline=shell_exec("cd $projHome/$id;tail -1 result.txt;");
          	          $kappa=trim(substr($kappaline,strpos($kappaline,'=')+1));
-         	          echo "\t".$kappa;
-         	          fprintf($result,"$kappa");
+         	          pwrite($result,"$kappa");
          	          $totalEline=shell_exec("cd $projHome/$id/minimize;tail -22 log.out| head -1;");
          	          list($null,$totalE)=sscanf($totalEline,"%d%f");
-         	          	  echo "\t".$totalE;
-         	          fprintf($result,"\t$totalE");
+         	        pwrite($result,"\t$totalE");
          	                   	          $Natomline=shell_exec("cd $projHome/$id/minimize;head -5 log.out|tail -1 ;");
          	          list($Natom)=sscanf($Natomline,"%d");
          	          if($Natom){
-         	          	  echo "\t".$Natom;
-         	          fprintf($result,"\t$Natom");
+         	        pwrite($result,"\t$Natom");
          	          $epn=$totalE/$Natom;
          	          
-         	          echo "\t".$epn;
-         	          fprintf($result,"\t$epn");
+         	        pwrite($result,"\t$epn");
          	          }
          	           $disorderLine=shell_exec("cd $projHome/$id/minimize;mkdir disorder 2>err;cd disorder;cp $srcHome/in.disorder .;$APP_PATH<in.disorder 2>err 1>log;tail -1 disorder.txt  2>err;");
          	          list($null,$disorder)=sscanf($disorderLine,"%d%f");
-         	          	  echo "\t".$disorder;
-         	          fprintf($result,"\t$disorder");
+         	          pwrite($result,"\t$disorder");
+         	          
+         	             $nonequ=shell_exec("cd $projHome/$id/minimize;mkdir nonequ 2>err;cd nonequ;$php $srcHome/nonequ.php;");
+         	          pwrite($result,"\t$nonequ");
+         	          $nonequ3=shell_exec("cd $projHome/$id/minimize/nonequ ;$php $srcHome/nonequ3.php;");
+         	          pwrite($result,"\t$nonequ3");
+         	           $nonequ4=shell_exec("cd $projHome/$id/minimize/nonequ ;$php $srcHome/nonequ4.php;");
+         	          pwrite($result,"\t$nonequ4");
          	          }
-         	       fprintf($result,"\n");
-         	 printf("\n");
+         	       pwrite($result,"\n");
        }
 }else if($argv[1]=="clean"){clean();
 
@@ -192,7 +195,7 @@ function clean(){
 	shell_exec("cd $projHome;ls >$projHome/tmp");
 	$file=fopen("$projHome/tmp","r");
 	while(list($ls)=fscanf($file,"%s")){
-		if($ls=="sub.php"||$ls=="tmp"||$ls=="post.php")continue;
+		if($ls=="sub.php"||$ls=="tmp"||$ls=="post.php"||$ls=="data")continue;
 		echo "deleting:$ls\n";
 		shell_exec("cd $projHome;rm -r $ls");
 	}

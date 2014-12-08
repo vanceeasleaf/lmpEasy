@@ -8,7 +8,7 @@ function setSubProject($index){
 global $projHome;
 $pid=shell_exec("cd $projHome/$index;qsub lammps.pbs;");
 echo "submit: $projHome/$index\n";
-sleep(1);
+#sleep(1);
 return intval($pid);
 }
 $loops=fopen("$projHome/qloops.txt","w");
